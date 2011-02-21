@@ -13,18 +13,18 @@ namespace HotFeet.Security.Cryptography {
 		static readonly string base64Group = "(.{{{0}}})";
 		static readonly string hashPattern = String.Format(
 			hashFormat.Replace("$", @"\$"),
-			String.Format(base64Group, bitToBase64Length(saltBitLength)),
-			String.Format(base64Group, bitToBase64Length(hashBitLength))
+			String.Format(base64Group, toBase64Length(saltBitLength)),
+			String.Format(base64Group, toBase64Length(hashBitLength))
 		);
 		static Regex hashRegex = new Regex(hashPattern);
 		
 		static readonly char zeroChar = Convert.ToBase64String(new byte[3] {0, 0, 0})[0];
 
-		static int bitToBase64Length(int bitLength) {
+		static int toBase64Length(int bitLength) {
 			return (bitLength + 5) / 6;
 		}
 		
-		static byte[] GetBytes(string s) {
+		static byte[] getBytes(string s) {
 			return Encoding.UTF8.GetBytes(s);
 		}
 
