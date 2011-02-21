@@ -31,6 +31,7 @@ namespace HotFeet.Security.Cryptography {
 		HashAlgorithm hashAlg = HashAlgorithm.Create("SHA512");
 		RandomNumberGenerator random = RandomNumberGenerator.Create();
 		object hashAlgoLock = new object();
+		object entropyLock = new object();
 		
 		static string ToFilledBase64(byte[] bytes) {
 			int mod = bytes.Length % 3;
@@ -63,7 +64,9 @@ namespace HotFeet.Security.Cryptography {
 
 		public string Hash(string password) {
 			byte[] salt = new byte[saltBitLength >> 3];
-			random.GetBytes(salt);
+			lock(entropyLock) {
+				random.GetBytes(salt);
+			}
 				
 			byte[] pass = getBytes(password);
 			byte[] hash = Hash(pass, salt);
