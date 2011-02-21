@@ -65,7 +65,7 @@ namespace HotFeet.Security.Cryptography {
 			byte[] salt = new byte[saltBitLength >> 3];
 			random.GetBytes(salt);
 				
-			byte[] pass = GetBytes(password);
+			byte[] pass = getBytes(password);
 			byte[] hash = Hash(pass, salt);
 				
 			return String.Format(
@@ -100,7 +100,7 @@ namespace HotFeet.Security.Cryptography {
 			byte[] storedSalt = FromFilledBase64(m.Groups[1].Value);
 			byte[] storedHash = FromFilledBase64(m.Groups[2].Value);
 
-			byte[] freshHash = Hash(GetBytes(password), storedSalt);
+			byte[] freshHash = Hash(getBytes(password), storedSalt);
 			for(int i = 0; i < freshHash.Length; i++) {
 				if(freshHash[i] != storedHash[i])
 					return false;
