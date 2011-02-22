@@ -30,27 +30,35 @@ module public PasswordHash =
 	let hashAlgoName = "SHA512"		
 	let hashBitLen = 512 //(len % 8 = 0)
 	let saltBitLen = 96 //(len % 8 = 0)
+
+	(* input/ouput character encoding *)
+	let enc = Encoding.UTF8
+	let bytes (s: string) = enc.GetBytes (s)
+	let str (bytes: byte[]) = enc.GetString (bytes)
 	 
 	(* base64 encoding *)
+	let trim len (bs: byte[]) = bs.[0..(len - 1)]
+	let pad value len (bs : byte[]) =
+		match len with
+		| 0 -> bs
+		| _ -> Array.append bs (Array.create len value)
+
+	let transform (ct : ICryptoTransform) (bs : byte[]) =
+		let (ibs, obs) = (ct.InputBlockSize, ct.OutputBlockSize)
+		let res = Array.zeroCreate ((bs.Length * obs + ibs - 1) / ibs)
+		let mutable (srcIdx, dstIdx) = (0, 0)
+		while bs.Length - srcIdx > ibs do
+			let _ = ct.TransformBlock(bs, srcIdx, ibs, res, dstIdx)
+			srcIdx <- srcIdx + ibs
+			dstIdx <- dstIdx + obs
+		Array.append (trim dstIdx res) (ct.TransformFinalBlock(bs, srcIdx, bs.Length - srcIdx))
+	
 	let base64Len (bitLen : int) = (bitLen + 5) / 6
-	let fromBase64 = Convert.FromBase64String
-	let toBase64 = Convert.ToBase64String
-	
-	let base64Str (bytes : byte[]) =
-		let appendZero count bs = Array.append bs (Array.zeroCreate count)
-		let trim (str: string) = str.Substring(0, base64Len (bytes.Length * 8))
-		match (bytes.Length) with
-		| len when (len % 3 = 0) -> bytes |> toBase64
-		| _ -> bytes |> appendZero 2 |> toBase64 |> trim
-	
-	let base64Zero = 'A'
-	let base64Bytes (str : string) =
-		match (str.Length * 6) with
-		| len when (len % 8 = 0) -> str |> fromBase64
-		| len -> ((str + "AA") |> fromBase64).[0..((len >>> 3) - 1)]
+	let fromBase64 (s: string) = s |> bytes |> transform (new FromBase64Transform())
+	let toBase64 (bs: byte[]) = bs |> transform (new ToBase64Transform()) |> trim (base64Len (bs.Length * 8)) |> str
 	
 	(* hash output formatting *)
-	let formatHash (salt, hash) = baseFormat (base64Str salt) (base64Str hash) 
+	let formatHash (salt, hash) = baseFormat (toBase64 salt) (toBase64 hash) 
 	
 	(* hash input parsing *)
 	let hashRegex =
@@ -60,31 +68,27 @@ module public PasswordHash =
 
 	let extractSaltAndHash s =
 		let m = hashRegex.Match(s)
-		let groupBytes idx = base64Bytes m.Groups.[idx + 1].Value
+		let groupBytes idx = fromBase64 m.Groups.[idx + 1].Value
 		if m.Success then (groupBytes 0, groupBytes 1) else failwith "Invalid hash format."	
 	
 	(* Crypto primitives *)
-	let (hashAlgo, hashAlgoLock) = (HashAlgorithm.Create(hashAlgoName), new obj())
+	let (hashAlgo, hashAlgoLock) = (HashAlgorithm.Create (hashAlgoName), new obj())
 	let hashBytes bytes =
 		let calcHash =
-			let _ = hashAlgo.TransformFinalBlock(bytes, 0, bytes.Length)
+			let _ = hashAlgo.TransformFinalBlock (bytes, 0, bytes.Length)
 			let hash = hashAlgo.Hash
 			hashAlgo.Clear()
 			hash
 		lock hashAlgoLock (fun _ -> calcHash)
 		 
-	let (randGen, randGenLock) = (RandomNumberGenerator.Create(), new obj())
+	let (randGen, randGenLock) = (RandomNumberGenerator.Create (), new obj())
 	let random (bytes : byte[]) =
-		lock randGenLock (fun _ -> randGen.GetBytes(bytes))
+		lock randGenLock (fun _ -> randGen.GetBytes (bytes))
 		bytes
 
 	let randomBytes len =
 		let mutable (bs : byte[]) = Array.zeroCreate len
 		random bs
-
-
-	(* input character encoding *)
-	let bytes (s: string) = Encoding.UTF8.GetBytes(s)
 	
 	(* salted password hashing *)
 	let hashSalted password salt =
@@ -98,5 +102,5 @@ module public PasswordHash =
 		formatHash (salt, hash)
 	
 	let public verify password hash =
-		let (storedSalt, storedHash) = extractSaltAndHash(hash)
+		let (storedSalt, storedHash) = extractSaltAndHash hash
 		(hashSalted password storedSalt) = storedHash
