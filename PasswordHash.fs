@@ -43,17 +43,16 @@ module public PasswordHash =
 		if m.Success then (groupBytes 0, groupBytes 1) else failwith "Invalid hash format."	
 	
 	(* Crypto primitives *)
-	let (hashAlgoLock, randomLock) = (new obj(), new obj())
-	let hashAlgo = HashAlgorithm.Create(hashAlgoName)
+	let (hashAlgo, hashAlgoLock) = (HashAlgorithm.Create(hashAlgoName), new obj())
 	let hashBytes bytes =
 		let _ = hashAlgo.TransformFinalBlock(bytes, 0, bytes.Length)
 		let hash = hashAlgo.Hash
 		hashAlgo.Clear()
 		hash
 		 
-	let randGen = RandomNumberGenerator.Create()
+	let (randGen, randGenLock) = (RandomNumberGenerator.Create(), new obj())
 	let random (bytes : byte[]) =
-		lock randomLock (fun _ -> randGen.GetBytes(bytes))
+		lock randGenLock (fun _ -> randGen.GetBytes(bytes))
 		bytes
 
 	let randomBytes len =
