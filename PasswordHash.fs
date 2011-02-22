@@ -59,6 +59,7 @@ let hashSalted password salt =
 	let (+) x y = Array.append x y
 	hashBytes (salt + password + salt)
 
+(* input character encoding *)
 let bytes (s: string) = Encoding.UTF8.GetBytes(s)
 
 (* public methods *)
