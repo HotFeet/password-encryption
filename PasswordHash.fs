@@ -20,7 +20,7 @@ let base64Str (bytes : byte[]) =
 	let trim (str: string) = str.Substring(0, bytes.Length)
 	match (bytes.Length) with
 	| len when (len % 3 = 0) -> bytes |> toBase64
-	| len -> bytes |> extend |> toBase64 |> trim
+	| _ -> bytes |> extend |> toBase64 |> trim
 
 let base64Bytes (str : string) =
 	match (str.Length * 6) with
