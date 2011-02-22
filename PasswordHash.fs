@@ -5,6 +5,8 @@ open System.Security.Cryptography
 
 //	type PasswordHash =
 
+let (+) x y = Array.append x y
+
 // (...BitLength % 8 == 0)		
 let saltBitLen = 96
 let hashBitLen = 512
@@ -16,7 +18,7 @@ let fromBase64 = Convert.FromBase64String
 let toBase64 = Convert.ToBase64String
 
 let base64Str (bytes : byte[]) =
-	let extend bytes = Array.append bytes [|0uy; 0uy|]
+	let extend bytes = Array.append bytes (Array.zeroCreate 2)
 	let trim (str: string) = str.Substring(0, bytes.Length)
 	match (bytes.Length) with
 	| len when (len % 3 = 0) -> bytes |> toBase64
@@ -41,6 +43,8 @@ let hashBytes bytes =
 	hashAlg.Clear()
 	hash
 	 
+let HashSalted password salt = hashBytes (salt + password + salt)
+
 let randGen = RandomNumberGenerator.Create()
 let random len =
 	let bytes = byte[len]
@@ -52,10 +56,6 @@ let Hash password =
 	let hash = HashSalted (bytes password) salt
 	formatHash salt hash
 
-let HashSalted password salt =
-	let (+) x y = Array.append x y 
-	hashBytes (salt + password + salt)
-		
 let Verify password hash =
 	let m = hashRegex.Match(hash)
 	if !m.Success
@@ -65,4 +65,4 @@ let Verify password hash =
 	let storedSalt = base64Bytes (grp 0)
 	let storedHash = base64Bytes (grp 1)
 
-	(HashSalted (getBytes password) storedSalt) == storedHash
+	(HashSalted (getBytes password) storedSalt) = storedHash
