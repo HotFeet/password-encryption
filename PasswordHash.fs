@@ -45,7 +45,7 @@ let hashBytes bytes =
 	hashAlgo.Clear()
 	hash
 	 
-let HashSalted password salt =
+let hashSalted password salt =
 	let (+) x y = Array.append x y
 	hashBytes (salt + password + salt)
 
@@ -57,9 +57,9 @@ let random len =
 
 let Hash password =
 	let salt = random (saltBitLen >>> 3)
-	let hash = HashSalted (bytes password) salt
+	let hash = hashSalted (bytes password) salt
 	formatHash salt hash
 
 let Verify password hash =
 	let (storedSalt, storedHash) = extractSaltAndHash(hash)
-	HashSalted (bytes password) storedSalt = storedHash
+	hashSalted (bytes password) storedSalt = storedHash
