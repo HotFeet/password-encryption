@@ -22,7 +22,13 @@ let hashRegex = new Regex(hashPattern)
 		
 let base64Zero = Convert.ToBase64String([|0uy; 0uy; 0uy|]).[0]
 
-let hashAlg = HashAlgorithm.Create("SHA512")
+let hashAlgo = HashAlgorithm.Create("SHA512")
+let hashBytes bytes =
+	hashAlg.TransformFinalBlock(bytes, 0, bytes.Length)
+	let hash = hashAlg.Hash
+	hashAlg.Clear()
+	hash
+	 
 let randGen = RandomNumberGenerator.Create()
 let random len =
 	let bytes = byte[len]
@@ -62,37 +68,20 @@ let random len =
 
 let Hash password =
 	let salt = random (saltBitLength >> 3)
-	let hash = Hash(bytes password, salt)
+	let hash = HashSalted (bytes password) salt
 	formatHash salt hash
 
-let Hash (password, salt) =
-	byte[] plain = new byte[password.Length + 2 * salt.Length];
-	Buffer.BlockCopy(salt, 0, plain, 0, salt.Length);
-	Buffer.BlockCopy(password, 0, plain, salt.Length, password.Length);
-	Buffer.BlockCopy(salt, 0, plain, salt.Length + password.Length, salt.Length);
-
-	//HashAlgorithm is stateful 
-	byte[] hash;
-	lock(hashAlgoLock) {
-		hashAlg.TransformFinalBlock(plain, 0, plain.Length);
-		hash = hashAlg.Hash;
-
-		hashAlg.Clear();
-	}
-	hash
+let HashSalted password salt =
+	let (+) x y = Array.append x y 
+	hashBytes (salt + password + salt)
 		
 let Verify password hash =
-	Match m = hashRegex.Match(hash);
-	if(!m.Success)
+	let m = hashRegex.Match(hash)
+	if !m.Success
 		throw new ArgumentException("codedHash");
 
-	byte[] storedSalt = FromFilledBase64(m.Groups[1].Value);
-	byte[] storedHash = FromFilledBase64(m.Groups[2].Value);
+	let grp idx = m.Groups.[idx + 1]
+	let storedSalt = base64Bytes (grp 0)
+	let storedHash = base64Bytes (grp 1)
 
-	byte[] freshHash = Hash(getBytes(password), storedSalt);
-	for(int i = 0; i < freshHash.Length; i++) {
-		if(freshHash[i] != storedHash[i])
-			return false;
-	}
-	
-	true
+	(HashSalted (getBytes password) storedSalt) == storedHash
