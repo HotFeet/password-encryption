@@ -16,11 +16,11 @@ let fromBase64 = Convert.FromBase64String
 let toBase64 = Convert.ToBase64String
 
 let base64Str (bytes : byte[]) =
-	let extend bytes = Array.append bytes (Array.zeroCreate 2)
-	let trim (str: string) = str.Substring(0, bytes.Length)
+	let appendZero count bs = Array.append bs (Array.zeroCreate count)
+	let trim (str: string) = str.Substring(0, base64Len (bytes.Length * 8))
 	match (bytes.Length) with
 	| len when (len % 3 = 0) -> bytes |> toBase64
-	| _ -> bytes |> extend |> toBase64 |> trim
+	| _ -> bytes |> appendZero 2 |> toBase64 |> trim
 
 let base64Bytes (str : string) =
 	match (str.Length * 6) with
