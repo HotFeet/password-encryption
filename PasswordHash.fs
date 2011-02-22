@@ -26,7 +26,7 @@ let base64Zero = 'A'
 let base64Bytes (str : string) =
 	match (str.Length * 6) with
 	| len when (len % 8 = 0) -> Convert.FromBase64String(str)
-	| len -> Convert.FromBase64String(str + "AA").[0..((len >>> 3) - 1)]
+	| len -> ((str + "AA") |> fromBase64).[0..((len >>> 3) - 1)]
 
 let formatHash salt hash = sprintf "$6$%s$%s" (base64Str salt) (base64Str hash) 
 
