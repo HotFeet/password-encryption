@@ -29,7 +29,7 @@ module public PasswordHash =
 		| len -> ((str + "AA") |> fromBase64).[0..((len >>> 3) - 1)]
 	
 	(* hash output formatting *)
-	let formatHash salt hash = baseFormat (base64Str salt) (base64Str hash) 
+	let formatHash (salt, hash) = baseFormat (base64Str salt) (base64Str hash) 
 	
 	(* hash input parsing *)
 	let hashRegex =
@@ -68,7 +68,7 @@ module public PasswordHash =
 	let public hash password =
 		let salt = random (saltBitLen >>> 3)
 		let hash = hashSalted password salt
-		formatHash salt hash
+		formatHash (salt, hash)
 	
 	let public verify password hash =
 		let (storedSalt, storedHash) = extractSaltAndHash(hash)
