@@ -32,9 +32,11 @@ module public PasswordHash =
 	let formatHash salt hash = baseFormat (base64Str salt) (base64Str hash) 
 	
 	(* hash input parsing *)
-	let base64Group bitLen = sprintf "(.{%d})" (bitLen |> base64Len)
-	let hashPattern = baseFormat (base64Group saltBitLen) (base64Group hashBitLen) 
-	let hashRegex = new Regex(hashPattern.Replace("$", @"\$"))
+	let hashRegex =
+		let base64Group bitLen = sprintf "(.{%d})" (bitLen |> base64Len)
+		let pattern = baseFormat (base64Group saltBitLen) (base64Group hashBitLen)
+		new Regex(pattern.Replace("$", @"\$")) 
+
 	let extractSaltAndHash s =
 		let m = hashRegex.Match(s)
 		let groupBytes idx = base64Bytes m.Groups.[idx + 1].Value
@@ -53,21 +55,21 @@ module public PasswordHash =
 		let mutable (bytes : byte[]) = Array.zeroCreate len
 		randGen.GetBytes(bytes)
 		bytes
+
+	(* input character encoding *)
+	let bytes (s: string) = Encoding.UTF8.GetBytes(s)
 	
 	(* salted password hashing *)
 	let hashSalted password salt =
 		let (+) x y = Array.append x y
-		hashBytes (salt + password + salt)
-	
-	(* input character encoding *)
-	let bytes (s: string) = Encoding.UTF8.GetBytes(s)
+		hashBytes (salt + (bytes password) + salt)
 	
 	(* main methods *)
 	let public hash password =
 		let salt = random (saltBitLen >>> 3)
-		let hash = hashSalted (bytes password) salt
+		let hash = hashSalted password salt
 		formatHash salt hash
 	
 	let public verify password hash =
 		let (storedSalt, storedHash) = extractSaltAndHash(hash)
-		hashSalted (bytes password) storedSalt = storedHash
+		hashSalted password storedSalt = storedHash
