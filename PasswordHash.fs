@@ -29,9 +29,14 @@ let base64Bytes (str : string) =
 	| len -> Convert.FromBase64String(str + "AA").[0..((len >>> 3) - 1)]
 
 let formatHash salt hash = sprintf "$6$%s$%s" (base64Str salt) (base64Str hash) 
+
 let base64Group bitLen = sprintf "(.{%d})" (bitLen |> base64Len)
 let hashPattern = sprintf "\$6\$%s\$%s" (base64Group saltBitLen) (base64Group hashBitLen) 
 let hashRegex = new Regex(hashPattern)
+let extractSaltAndHash s =
+	let m = hashRegex.Match(s)
+	let groupBytes idx = base64Bytes m.Groups.[idx + 1].Value
+	if m.Success then (groupBytes 0, groupBytes 1) else failwith "Invalid hash format."	
 
 let hashAlgo = HashAlgorithm.Create("SHA512")
 let hashBytes bytes =
@@ -56,9 +61,5 @@ let Hash password =
 	formatHash salt hash
 
 let Verify password hash =
-	let m = hashRegex.Match(hash)
-	if not m.Success then failwith "Invalid hash format."
-
-	let groupBytes idx = base64Bytes m.Groups.[idx + 1].Value
-	let (storedSalt, storedHash) = (groupBytes 0, groupBytes 1)
+	let (storedSalt, storedHash) = extractSaltAndHash(hash)
 	HashSalted (bytes password) storedSalt = storedHash
