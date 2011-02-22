@@ -5,13 +5,13 @@ open System.Security.Cryptography
 
 //	type PasswordHash =
 
-// (...BitLength % 8 == 0)		
+// (...BitLength % 8 == 0)
+let hashAlgoName = "SHA512"		
 let saltBitLen = 96
 let hashBitLen = 512
 
+(* base64 encoding *)
 let base64Len (bitLen : int) = (bitLen + 5) / 6
-let bytes (s: string) = Encoding.UTF8.GetBytes(s)
-
 let fromBase64 = Convert.FromBase64String
 let toBase64 = Convert.ToBase64String
 
@@ -28,8 +28,10 @@ let base64Bytes (str : string) =
 	| len when (len % 8 = 0) -> Convert.FromBase64String(str)
 	| len -> ((str + "AA") |> fromBase64).[0..((len >>> 3) - 1)]
 
+(* hash output formatting *)
 let formatHash salt hash = sprintf "$6$%s$%s" (base64Str salt) (base64Str hash) 
 
+(* hash input parsing *)
 let base64Group bitLen = sprintf "(.{%d})" (bitLen |> base64Len)
 let hashPattern = sprintf "\$6\$%s\$%s" (base64Group saltBitLen) (base64Group hashBitLen) 
 let hashRegex = new Regex(hashPattern)
@@ -38,23 +40,28 @@ let extractSaltAndHash s =
 	let groupBytes idx = base64Bytes m.Groups.[idx + 1].Value
 	if m.Success then (groupBytes 0, groupBytes 1) else failwith "Invalid hash format."	
 
-let hashAlgo = HashAlgorithm.Create("SHA512")
+(* Crypto primitives *)
+let hashAlgo = HashAlgorithm.Create(hashAlgoName)
 let hashBytes bytes =
 	let _ = hashAlgo.TransformFinalBlock(bytes, 0, bytes.Length)
 	let hash = hashAlgo.Hash
 	hashAlgo.Clear()
 	hash
 	 
+let randGen = RandomNumberGenerator.Create()
+let random len =
+	let mutable (bytes : byte[]) = Array.zeroCreate len
+	randGen.GetBytes(bytes)
+	bytes
+
+(* salted password hashing *)
 let hashSalted password salt =
 	let (+) x y = Array.append x y
 	hashBytes (salt + password + salt)
 
-let randGen = RandomNumberGenerator.Create()
-let random len =
-	let (bytes : byte[]) = Array.zeroCreate len
-	randGen.GetBytes(bytes)
-	bytes
+let bytes (s: string) = Encoding.UTF8.GetBytes(s)
 
+(* public methods *)
 let Hash password =
 	let salt = random (saltBitLen >>> 3)
 	let hash = hashSalted (bytes password) salt
