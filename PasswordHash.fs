@@ -72,4 +72,4 @@ module public PasswordHash =
 	
 	let public verify password hash =
 		let (storedSalt, storedHash) = extractSaltAndHash(hash)
-		hashSalted password storedSalt = storedHash
+		(hashSalted password storedSalt) = storedHash
