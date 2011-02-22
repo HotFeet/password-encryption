@@ -22,6 +22,7 @@ let base64Str (bytes : byte[]) =
 	| len when (len % 3 = 0) -> bytes |> toBase64
 	| _ -> bytes |> appendZero 2 |> toBase64 |> trim
 
+let base64Zero = 'A'
 let base64Bytes (str : string) =
 	match (str.Length * 6) with
 	| len when (len % 8 = 0) -> Convert.FromBase64String(str)
@@ -31,8 +32,6 @@ let formatHash salt hash = sprintf "$6$%s$%s" (base64Str salt) (base64Str hash)
 let base64Group bitLen = sprintf "(.{%d})" (bitLen |> base64Len)
 let hashPattern = sprintf "\$6\$%s\$%s" (base64Group saltBitLen) (base64Group hashBitLen) 
 let hashRegex = new Regex(hashPattern)
-		
-let base64Zero = 'A'
 
 let hashAlgo = HashAlgorithm.Create("SHA512")
 let hashBytes bytes =
@@ -62,6 +61,4 @@ let Verify password hash =
 
 	let groupBytes idx = base64Bytes m.Groups.[idx + 1].Value
 	let (storedSalt, storedHash) = (groupBytes 0, groupBytes 1)
-
 	HashSalted (bytes password) storedSalt = storedHash
-	
