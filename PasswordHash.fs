@@ -25,7 +25,7 @@ let base64Str (bytes : byte[]) =
 let base64Zero = 'A'
 let base64Bytes (str : string) =
 	match (str.Length * 6) with
-	| len when (len % 8 = 0) -> Convert.FromBase64String(str)
+	| len when (len % 8 = 0) -> str |> fromBase64
 	| len -> ((str + "AA") |> fromBase64).[0..((len >>> 3) - 1)]
 
 (* hash output formatting *)
