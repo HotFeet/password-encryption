@@ -36,9 +36,9 @@ let base64Zero = 'A'
 
 let hashAlgo = HashAlgorithm.Create("SHA512")
 let hashBytes bytes =
-	hashAlg.TransformFinalBlock(bytes, 0, bytes.Length)
-	let hash = hashAlg.Hash
-	hashAlg.Clear()
+	let _ = hashAlgo.TransformFinalBlock(bytes, 0, bytes.Length)
+	let hash = hashAlgo.Hash
+	hashAlgo.Clear()
 	hash
 	 
 let HashSalted password salt =
@@ -47,22 +47,21 @@ let HashSalted password salt =
 
 let randGen = RandomNumberGenerator.Create()
 let random len =
-	let bytes = byte[len]
-	rangGen.GetBytes(bytes)
+	let (bytes : byte[]) = Array.zeroCreate len
+	randGen.GetBytes(bytes)
 	bytes
 
 let Hash password =
-	let salt = random (saltBitLength >> 3)
+	let salt = random (saltBitLen >>> 3)
 	let hash = HashSalted (bytes password) salt
 	formatHash salt hash
 
 let Verify password hash =
 	let m = hashRegex.Match(hash)
-	if !m.Success
-		throw new ArgumentException("codedHash");
+	if not m.Success then failwith "Invalid hash format."
 
-	let grp idx = m.Groups.[idx + 1]
+	let grp idx = m.Groups.[idx + 1].Value
 	let storedSalt = base64Bytes (grp 0)
 	let storedHash = base64Bytes (grp 1)
 
-	(HashSalted (getBytes password) storedSalt) = storedHash
+	(HashSalted (bytes password) storedSalt) = storedHash
