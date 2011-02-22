@@ -45,10 +45,12 @@ module public PasswordHash =
 	(* Crypto primitives *)
 	let (hashAlgo, hashAlgoLock) = (HashAlgorithm.Create(hashAlgoName), new obj())
 	let hashBytes bytes =
-		let _ = hashAlgo.TransformFinalBlock(bytes, 0, bytes.Length)
-		let hash = hashAlgo.Hash
-		hashAlgo.Clear()
-		hash
+		let calcHash =
+			let _ = hashAlgo.TransformFinalBlock(bytes, 0, bytes.Length)
+			let hash = hashAlgo.Hash
+			hashAlgo.Clear()
+			hash
+		lock hashAlgoLock (fun _ -> calcHash)
 		 
 	let (randGen, randGenLock) = (RandomNumberGenerator.Create(), new obj())
 	let random (bytes : byte[]) =
@@ -66,7 +68,7 @@ module public PasswordHash =
 	(* salted password hashing *)
 	let hashSalted password salt =
 		let (+) x y = Array.append x y
-		lock hashAlgoLock (fun _ -> hashBytes (salt + (bytes password) + salt))
+		hashBytes (salt + (bytes password) + salt)
 	
 	(* main methods *)
 	let public hash password =
