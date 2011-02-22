@@ -43,6 +43,7 @@ module public PasswordHash =
 		if m.Success then (groupBytes 0, groupBytes 1) else failwith "Invalid hash format."	
 	
 	(* Crypto primitives *)
+	let (hashAlgoLock, randomLock) = (new obj(), new obj())
 	let hashAlgo = HashAlgorithm.Create(hashAlgoName)
 	let hashBytes bytes =
 		let _ = hashAlgo.TransformFinalBlock(bytes, 0, bytes.Length)
@@ -51,10 +52,14 @@ module public PasswordHash =
 		hash
 		 
 	let randGen = RandomNumberGenerator.Create()
-	let random len =
-		let mutable (bytes : byte[]) = Array.zeroCreate len
-		randGen.GetBytes(bytes)
+	let random (bytes : byte[]) =
+		lock randomLock (fun _ -> randGen.GetBytes(bytes))
 		bytes
+
+	let randomBytes len =
+		let mutable (bs : byte[]) = Array.zeroCreate len
+		random bs
+
 
 	(* input character encoding *)
 	let bytes (s: string) = Encoding.UTF8.GetBytes(s)
@@ -62,11 +67,11 @@ module public PasswordHash =
 	(* salted password hashing *)
 	let hashSalted password salt =
 		let (+) x y = Array.append x y
-		hashBytes (salt + (bytes password) + salt)
+		lock hashAlgoLock (fun _ -> hashBytes (salt + (bytes password) + salt))
 	
 	(* main methods *)
 	let public hash password =
-		let salt = random (saltBitLen >>> 3)
+		let salt = randomBytes (saltBitLen >>> 3)
 		let hash = hashSalted password salt
 		formatHash (salt, hash)
 	
