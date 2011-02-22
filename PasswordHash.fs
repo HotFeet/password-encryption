@@ -5,11 +5,12 @@ open System.Security.Cryptography
 
 //	type PasswordHash =
 
-// (...BitLength % 8 == 0)
+(* hash format *)
+let baseFormat = sprintf "$6$%s$%s"
 let hashAlgoName = "SHA512"		
-let saltBitLen = 96
-let hashBitLen = 512
-
+let hashBitLen = 512 //(len % 8 = 0)
+let saltBitLen = 96 //(len % 8 = 0)
+ 
 (* base64 encoding *)
 let base64Len (bitLen : int) = (bitLen + 5) / 6
 let fromBase64 = Convert.FromBase64String
@@ -29,12 +30,12 @@ let base64Bytes (str : string) =
 	| len -> ((str + "AA") |> fromBase64).[0..((len >>> 3) - 1)]
 
 (* hash output formatting *)
-let formatHash salt hash = sprintf "$6$%s$%s" (base64Str salt) (base64Str hash) 
+let formatHash salt hash = baseFormat (base64Str salt) (base64Str hash) 
 
 (* hash input parsing *)
 let base64Group bitLen = sprintf "(.{%d})" (bitLen |> base64Len)
-let hashPattern = sprintf "\$6\$%s\$%s" (base64Group saltBitLen) (base64Group hashBitLen) 
-let hashRegex = new Regex(hashPattern)
+let hashPattern = baseFormat (base64Group saltBitLen) (base64Group hashBitLen) 
+let hashRegex = new Regex(hashPattern.Replace("$", @"\$"))
 let extractSaltAndHash s =
 	let m = hashRegex.Match(s)
 	let groupBytes idx = base64Bytes m.Groups.[idx + 1].Value
