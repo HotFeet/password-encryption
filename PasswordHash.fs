@@ -86,16 +86,13 @@ module public PasswordHash =
 
 	(* crypted password format *)
 	let format = sprintf "$6$%s$%s"
-
-	(* output *)
-	let compose (salt, hash) = format (toBase64 salt) (toBase64 hash) 
-	
-	(* input *)
 	let cryptedPasswordRegex =
 		let base64Group bitLen = sprintf "(.{%d})" (bitLen |> base64Len)
 		let pattern = format (base64Group saltBitLen) (base64Group hashBitLen)
 		regex (pattern.Replace ("$", @"\$")) 
 
+	(* input / output *)
+	let compose (salt, hash) = format (toBase64 salt) (toBase64 hash) 
 	let decompose s =
 		match s with
 		| Match cryptedPasswordRegex [salt; hash] -> (toBytes salt, toBytes hash)
