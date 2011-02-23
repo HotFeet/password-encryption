@@ -21,6 +21,6 @@
 
 open System
 
-type IPasswordHash
+type IPasswordHash =
 	abstract Hash : string -> string
 	abstract Verify : string * string -> bool
