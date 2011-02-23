@@ -25,16 +25,17 @@ open System.Text.RegularExpressions
 open System.Security.Cryptography
 
 module public PasswordHash =
-	(* hash format *)
-	let baseFormat = sprintf "$6$%s$%s"
-	let hashAlgoName = "SHA512"		
-	let hashBitLen = 512 //(len % 8 = 0)
-	let saltBitLen = 96 //(len % 8 = 0)
+	(* utility *)
+	let regex s = new Regex (s)
+	let (=~) (r: Regex) (input: string) = r.Match input
+	let (|Match|_|) (r : Regex) input =
+		let m = (r =~ input) in
+		if m.Success then Some (List.tail [for g in m.Groups -> g.Value]) else None
 
 	(* input/ouput character encoding *)
 	let enc = Encoding.UTF8
-	let bytes (s: string) = enc.GetBytes (s)
-	let str (bytes: byte[]) = enc.GetString (bytes)
+	let toBytes (s: string) = enc.GetBytes (s)
+	let toString (bytes: byte[]) = enc.GetString (bytes)
 	 
 	(* base64 encoding *)
 	let trim len (bs: byte[]) = bs.[0..(len - 1)]
@@ -54,29 +55,18 @@ module public PasswordHash =
 		Array.append (trim dstIdx res) (ct.TransformFinalBlock(bs, srcIdx, bs.Length - srcIdx))
 	
 	let base64Len (bitLen : int) = (bitLen + 5) / 6
-	let fromBase64 (s: string) = s |> bytes |> transform (new FromBase64Transform())
-	let toBase64 (bs: byte[]) = bs |> transform (new ToBase64Transform()) |> trim (base64Len (bs.Length * 8)) |> str
-	
-	(* hash output formatting *)
-	let formatHash (salt, hash) = baseFormat (toBase64 salt) (toBase64 hash) 
-	
-	(* hash input parsing *)
-	let hashRegex =
-		let base64Group bitLen = sprintf "(.{%d})" (bitLen |> base64Len)
-		let pattern = baseFormat (base64Group saltBitLen) (base64Group hashBitLen)
-		new Regex(pattern.Replace("$", @"\$")) 
-
-	let extractSaltAndHash s =
-		let m = hashRegex.Match(s)
-		let groupBytes idx = fromBase64 m.Groups.[idx + 1].Value
-		if m.Success then (groupBytes 0, groupBytes 1) else failwith "Invalid hash format."	
+	let fromBase64 (s: string) = s |> toBytes |> transform (new FromBase64Transform())
+	let toBase64 (bs: byte[]) = bs |> transform (new ToBase64Transform()) |> trim (base64Len (bs.Length * 8)) |> toString
 	
 	(* Crypto primitives *)
+	let hashAlgoName = "SHA512"		
+	let hashBitLen = 512 //(len % 8 = 0)
+	let saltBitLen = 96 //(len % 8 = 0)
+
 	let (hashAlgo, hashAlgoLock) = (HashAlgorithm.Create (hashAlgoName), new obj())
 	let hashBytes bytes =
 		let calcHash =
-			let _ = hashAlgo.TransformFinalBlock (bytes, 0, bytes.Length)
-			let hash = hashAlgo.Hash
+			let (_, hash) = (hashAlgo.TransformFinalBlock (bytes, 0, bytes.Length), hashAlgo.Hash)
 			hashAlgo.Clear()
 			hash
 		lock hashAlgoLock (fun _ -> calcHash)
@@ -90,17 +80,36 @@ module public PasswordHash =
 		let mutable (bs : byte[]) = Array.zeroCreate len
 		random bs
 	
-	(* salted password hashing *)
-	let hashSalted password salt =
+	let saltPassword password salt =
 		let (+) x y = Array.append x y
-		hashBytes (salt + (bytes password) + salt)
+		salt + password + salt
+
+	(* crypted password format *)
+	let format = sprintf "$6$%s$%s"
+
+	(* output *)
+	let compose (salt, hash) = format (toBase64 salt) (toBase64 hash) 
 	
+	(* input *)
+	let cryptedPasswordRegex =
+		let base64Group bitLen = sprintf "(.{%d})" (bitLen |> base64Len)
+		let pattern = format (base64Group saltBitLen) (base64Group hashBitLen)
+		regex (pattern.Replace ("$", @"\$")) 
+
+	let decompose s =
+		match s with
+		| Match cryptedPasswordRegex [salt; hash] -> (toBytes salt, toBytes hash)
+		| _ -> failwith "Invalid hash format."
+
 	(* main methods *)
-	let public hash password =
+	let hash password salt = hashBytes (saltPassword password salt)
+	let crypt password =
 		let salt = randomBytes (saltBitLen >>> 3)
-		let hash = hashSalted password salt
-		formatHash (salt, hash)
+		(salt, hash password salt)
 	
-	let public verify password hash =
-		let (storedSalt, storedHash) = extractSaltAndHash hash
-		(hashSalted password storedSalt) = storedHash
+	let verify password (salt, hash) =
+		hashBytes (saltPassword password salt) = hash
+	
+	let public Crypt password = compose (crypt password)
+	let public Verify (password, cryptedPassword) =
+		verify (toBytes password) (decompose cryptedPassword)
