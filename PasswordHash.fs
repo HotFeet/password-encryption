@@ -29,7 +29,7 @@ module public PasswordHash =
 	let regex s = new Regex (s)
 	let (=~) (r: Regex) (input: string) = r.Match input
 	let (|Match|_|) (r : Regex) input =
-		let m = (r =~ input) in
+		let m = (r =~ input)
 		if m.Success then Some (List.tail [for g in m.Groups -> g.Value]) else None
 
 	(* input/ouput character encoding *)
