@@ -104,9 +104,7 @@ module public PasswordHash =
 		let salt = randomBytes (saltBitLen >>> 3)
 		(salt, hash password salt)
 	
-	let verify password (salt, hash) =
-		hashBytes (saltPassword password salt) = hash
+	let verify password (salt, hash) = (hashBytes (saltPassword password salt) = hash)
 	
 	let public Crypt password = compose (crypt password)
-	let public Verify (password, cryptedPassword) =
-		verify (toBytes password) (decompose cryptedPassword)
+	let public Verify (password, cryptedPassword) = verify (toBytes password) (decompose cryptedPassword)
