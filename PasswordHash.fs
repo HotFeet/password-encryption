@@ -24,7 +24,7 @@ open System.Text
 open System.Text.RegularExpressions
 open System.Security.Cryptography
 
-type PasswordHash () =
+type public PasswordHash () =
 	(* utility *)
 	let regex s = new Regex (s)
 	let (=~) (r: Regex) (input: string) = r.Match input
