@@ -22,5 +22,5 @@
 open System
 
 type IPasswordHash =
-	abstract Hash : string -> string
+	abstract Crypt : string -> string
 	abstract Verify : string * string -> bool

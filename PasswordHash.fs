@@ -24,7 +24,7 @@ open System.Text
 open System.Text.RegularExpressions
 open System.Security.Cryptography
 
-module public PasswordHash =
+type PasswordHash () =
 	(* utility *)
 	let regex s = new Regex (s)
 	let (=~) (r: Regex) (input: string) = r.Match input
@@ -105,6 +105,7 @@ module public PasswordHash =
 		(salt, hash password salt)
 	
 	let verify password (salt, hash) = (hashBytes (saltPassword password salt) = hash)
-	
-	let public Crypt password = compose (crypt password)
-	let public Verify (password, cryptedPassword) = verify (toBytes password) (decompose cryptedPassword)
+
+	interface IPasswordHash with
+		member x.Crypt password = password |> toBytes |> crypt |> compose
+		member x.Verify (password, cryptedPassword) = (toBytes password, decompose cryptedPassword) ||> verify
