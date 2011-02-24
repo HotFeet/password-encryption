@@ -1,1 +1,4 @@
-Create separate type base64.
+- Create separate type base64.
+- Add unit tests
+  - standalone
+  - F# impl. vs C# impl.
