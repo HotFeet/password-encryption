@@ -21,43 +21,14 @@
 
 open System
 open System.Text
-open System.Text.RegularExpressions
 open System.Security.Cryptography
 
 type public PasswordHash () =
-	(* utility *)
-	let regex s = new Regex (s)
-	let (=~) (r: Regex) (input: string) = r.Match input
-	let (|Match|_|) (r : Regex) input =
-		let m = (r =~ input)
-		if m.Success then Some (List.tail [for g in m.Groups -> g.Value]) else None
-
 	(* input/ouput character encoding *)
 	let enc = Encoding.UTF8
 	let toBytes (s: string) = enc.GetBytes (s)
 	let toString (bytes: byte[]) = enc.GetString (bytes)
 	 
-	(* base64 encoding *)
-	let trim len (bs: byte[]) = bs.[0..(len - 1)]
-	let pad value len (bs : byte[]) =
-		match len with
-		| 0 -> bs
-		| _ -> Array.append bs (Array.create len value)
-
-	let transform (ct : ICryptoTransform) (bs : byte[]) =
-		let (ibs, obs) = (ct.InputBlockSize, ct.OutputBlockSize)
-		let res = Array.zeroCreate ((bs.Length * obs + ibs - 1) / ibs)
-		let mutable (srcIdx, dstIdx) = (0, 0)
-		while bs.Length - srcIdx > ibs do
-			let _ = ct.TransformBlock(bs, srcIdx, ibs, res, dstIdx)
-			srcIdx <- srcIdx + ibs
-			dstIdx <- dstIdx + obs
-		Array.append (trim dstIdx res) (ct.TransformFinalBlock(bs, srcIdx, bs.Length - srcIdx))
-	
-	let base64Len (bitLen : int) = (bitLen + 5) / 6
-	let fromBase64 (s: string) = s |> toBytes |> transform (new FromBase64Transform())
-	let toBase64 (bs: byte[]) = bs |> transform (new ToBase64Transform()) |> trim (base64Len (bs.Length * 8)) |> toString
-	
 	(* Crypto primitives *)
 	let hashAlgoName = "SHA512"		
 	let hashBitLen = 512 //(len % 8 = 0)
