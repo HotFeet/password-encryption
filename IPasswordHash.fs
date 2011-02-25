@@ -21,6 +21,7 @@
 
 open System
 
-type IPasswordHash =
-	abstract Crypt : string -> string
-	abstract Verify : string * string -> bool
+namespace HotFeet.Security.Cryptography
+	type IPasswordHash =
+		abstract Crypt : string -> string
+		abstract Verify : string * string -> bool

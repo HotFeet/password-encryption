@@ -23,6 +23,7 @@ open System
 open System.Text
 open System.Security.Cryptography
 open HotFeet.Text
+open HotFeet.FSharp
 
 namespace HotFeet.Security.Cryptography
 	type public PasswordHash () =
