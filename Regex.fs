@@ -22,9 +22,10 @@
 open System
 open System.Text.RegularExpressions
 
-module Regex =
-	let regex s = new Regex (s)
-	let (=~) (r: Regex) (input: string) = r.Match input
-	let (|Match|_|) (r : Regex) input =
-		let m = (r =~ input)
-		if m.Success then Some (List.tail [for g in m.Groups -> g.Value]) else None
+namespace HotFeet.FSharp
+	module Regex =
+		let regex s = new Regex (s)
+		let (=~) (r: Regex) (input: string) = r.Match input
+		let (|Match|_|) (r : Regex) input =
+			let m = (r =~ input)
+			if m.Success then Some (List.tail [for g in m.Groups -> g.Value]) else None
