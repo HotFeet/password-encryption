@@ -1,3 +1,4 @@
+- Switch from byte array to byte list
 - Add unit tests
   - standalone
   - F# impl. vs C# impl.
