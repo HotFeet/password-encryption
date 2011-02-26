@@ -63,15 +63,15 @@ namespace HotFeet.Security.Cryptography
 		(* crypted password format *)
 		let format = sprintf "$6$%s$%s"
 		let cryptedPasswordRegex =
-			let base64Group bitLen = sprintf "(.{%d})" (bitLen |> Base64.GetStringLen)
+			let base64Group bitLen = sprintf "(.{%d})" (bitLen |> Base64.getStringLen)
 			let pattern = format (base64Group saltBitLen) (base64Group hashBitLen)
 			regex (pattern.Replace ("$", @"\$")) 
 	
 		(* input / output *)
-		let compose (salt, hash) = format (salt |> Base64.ToString) (hash |> Base64.ToString) 
+		let compose (salt, hash) = format (salt |> Base64.toString) (hash |> Base64.toString) 
 		let decompose s =
 			match s with
-			| Match cryptedPasswordRegex [salt; hash] -> (salt |> Base64.FromString, hash |> Base64.FromString)
+			| Match cryptedPasswordRegex [salt; hash] -> (salt |> Base64.ofString, hash |> Base64.ofString)
 			| _ -> failwith "Invalid hash format."
 	
 		(* main methods *)

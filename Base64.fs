@@ -41,6 +41,6 @@ namespace HotFeet.Text
 				dstIdx <- dstIdx + obs
 			Array.append (trim dstIdx res) (ct.TransformFinalBlock(bs, srcIdx, bs.Length - srcIdx))
 		
-		let public GetStringLen (bitLen : int) = (bitLen + 5) / 6
-		let public ToString (s: string) = s |> toBytes |> transform (new FromBase64Transform())
-		let public FromString (bs: byte[]) = bs |> transform (new ToBase64Transform()) |> trim (GetByteLen (bs.Length * 8)) |> toString
+		let public getStringLen (bitLen : int) = (bitLen + 5) / 6
+		let public toString (s: string) = s |> toBytes |> transform (new FromBase64Transform())
+		let public ofString (bs: byte[]) = bs |> transform (new ToBase64Transform()) |> trim (GetByteLen (bs.Length * 8)) |> toString
