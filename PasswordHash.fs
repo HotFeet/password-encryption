@@ -64,7 +64,7 @@ namespace HotFeet.Security.Cryptography
 			regex (pattern.Replace ("$", @"\$")) 
 	
 		(* input / output *)
-		let compose (salt, hash) = format (salt |> Base64.toString) (hash |> Base64.toString) 
+		let compose salt hash = format (salt |> Base64.toString) (hash |> Base64.toString) 
 		let decompose s =
 			match s with
 			| Match cryptedPasswordRegex [salt; hash] -> (salt |> Base64.ofString, hash |> Base64.ofString)
@@ -82,5 +82,5 @@ namespace HotFeet.Security.Cryptography
 		let verify password (salt, hash) = ((password, salt) ||> saltPassword |> calcHash) = hash
 	
 		interface IPasswordHash with
-			member x.Crypt password = password |> toBytes |> crypt |> compose
+			member x.Crypt password = password |> toBytes |> crypt ||> compose
 			member x.Verify (password, cryptedPassword) = (password |> toBytes, cryptedPassword |> decompose) ||> verify
