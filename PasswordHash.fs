@@ -31,9 +31,9 @@ namespace HotFeet.Security.Cryptography
 		let enc = Encoding.UTF8
 		let toBytes (s: string) = enc.GetBytes (s)
 		let toString (bs: byte[]) = enc.GetString (bs)
-		 
+
 		(* Crypto primitives *)
-		let hashAlgoName = "SHA512"		
+		let hashAlgoName = "SHA512"
 		let hashBitLen = 512 //(len % 8 = 0)
 		let saltBitLen = 96 //(len % 8 = 0)
 
@@ -45,31 +45,31 @@ namespace HotFeet.Security.Cryptography
 				hashAlgo.Clear()
 				hash
 			lock hashAlgoLock (fun _ -> calcHashImperative)
-			 
-		(* Random Number Generator *)	
+
+		(* Random Number Generator *)
 		let (randGen, randGenLock) = (RandomNumberGenerator.Create (), new obj())
 		let randomImperative (bs : byte[]) =
 			lock randGenLock (fun _ -> randGen.GetBytes (bs))
 			bs
-	
+
 		let randomBytes len =
 			let mutable (bs : byte[]) = Array.zeroCreate len
 			randomImperative bs
-		
+
 		(* crypted password format *)
 		let format = sprintf "$6$%s$%s"
 		let cryptedPasswordRegex =
 			let base64Group bitLen = sprintf "(.{%d})" (bitLen |> Base64.getStringLen)
 			let pattern = format (base64Group saltBitLen) (base64Group hashBitLen)
-			regex (pattern.Replace ("$", @"\$")) 
-	
+			regex (pattern.Replace ("$", @"\$"))
+
 		(* input / output *)
 		let compose salt hash = format (salt |> Base64.toString) (hash |> Base64.toString) 
 		let decompose s =
 			match s with
 			| Match cryptedPasswordRegex [salt; hash] -> (salt |> Base64.ofString, hash |> Base64.ofString)
 			| _ -> failwith "Invalid hash format."
-	
+
 		(* main methods *)
 		let saltPassword password salt =
 			let (+) x y = Array.append x y
@@ -78,9 +78,9 @@ namespace HotFeet.Security.Cryptography
 		let crypt password =
 			let salt = randomBytes (saltBitLen >>> 3)
 			(salt, (password, salt) ||> saltPassword |> calcHash)
-		
+
 		let verify password (salt, hash) = ((password, salt) ||> saltPassword |> calcHash) = hash
-	
+
 		interface IPasswordHash with
 			member x.Crypt password = password |> toBytes |> crypt ||> compose
 			member x.Verify (password, cryptedPassword) = (password |> toBytes, cryptedPassword |> decompose) ||> verify
