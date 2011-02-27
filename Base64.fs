@@ -20,7 +20,6 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 open System
-open System.Text
 
 namespace HotFeet.Text
 	module Base64 =
