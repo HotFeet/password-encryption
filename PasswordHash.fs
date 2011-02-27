@@ -40,21 +40,21 @@ namespace HotFeet.Security.Cryptography
 		(* Hash Algorithm *)	
 		let (hashAlgo, hashAlgoLock) = (HashAlgorithm.Create (hashAlgoName), new obj())
 		let calcHash bs =
-			let imperativeCalcHash =
+			let calcHashImperative =
 				let (_, hash) = (hashAlgo.TransformFinalBlock (bs, 0, bs.Length), hashAlgo.Hash)
 				hashAlgo.Clear()
 				hash
-			lock hashAlgoLock (fun _ -> imperativeCalcHash)
+			lock hashAlgoLock (fun _ -> calcHashImperative)
 			 
 		(* Random Number Generator *)	
 		let (randGen, randGenLock) = (RandomNumberGenerator.Create (), new obj())
-		let random (bs : byte[]) =
+		let randomImperative (bs : byte[]) =
 			lock randGenLock (fun _ -> randGen.GetBytes (bs))
 			bs
 	
 		let randomBytes len =
 			let mutable (bs : byte[]) = Array.zeroCreate len
-			random bs
+			randomImperative bs
 		
 		(* crypted password format *)
 		let format = sprintf "$6$%s$%s"
