@@ -75,12 +75,11 @@ namespace HotFeet.Security.Cryptography
 			let (+) x y = Array.append x y
 			salt + password + salt
 
-		let generateHash = saltPassword >> calcHash
 		let crypt password =
 			let salt = randomBytes (saltBitLen >>> 3)
-			(salt, password salt ||> generateHash)
+			(salt, password salt ||> saltPassword |> calcHash)
 		
-		let verify password (salt, hash) = (password salt ||> generateHash) = hash
+		let verify password (salt, hash) = (password salt ||> saltPassword |> calcHash) = hash
 	
 		interface IPasswordHash with
 			member x.Crypt password = password |> toBytes |> crypt |> compose

@@ -26,10 +26,12 @@ namespace HotFeet.Text
 	module Base64 =
 		let fromBase64 = Convert.FromBase64String
 		let toBase64 = Convert.ToBase64String
-		
+
+		let appendZero count bs = Array.append bs (Array.zeroCreate count)
+		let public getStringLen (bitLen : int) = (bitLen + 5) / 6
+
 		let public toString (bs : byte[]) =
-			let appendZero count bs = Array.append bs (Array.zeroCreate count)
-			let trim (str: string) = str.Substring(0, base64Len (bs.Length * 8))
+			let trim (str: string) = str.Substring(0, getStringLen (bs.Length * 8))
 			match (bs.Length) with
 			| len when (len % 3 = 0) -> bs |> toBase64
 			| _ -> bs |> appendZero 2 |> toBase64 |> trim
@@ -39,5 +41,3 @@ namespace HotFeet.Text
 			match (s.Length * 6) with
 			| len when (len % 8 = 0) -> s |> fromBase64
 			| len -> ((s + "AA") |> fromBase64).[0..((len >>> 3) - 1)]
-
-		let public getStringLen (bitLen : int) = (bitLen + 5) / 6
