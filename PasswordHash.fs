@@ -30,7 +30,7 @@ namespace HotFeet.Security.Cryptography
 		(* input/ouput character encoding *)
 		let enc = Encoding.UTF8
 		let toBytes (s: string) = enc.GetBytes (s)
-		let toString (bytes: byte[]) = enc.GetString (bytes)
+		let toString (bs: byte[]) = enc.GetString (bs)
 		 
 		(* Crypto primitives *)
 		let hashAlgoName = "SHA512"		
@@ -39,18 +39,18 @@ namespace HotFeet.Security.Cryptography
 
 		(* Hash Algorithm *)	
 		let (hashAlgo, hashAlgoLock) = (HashAlgorithm.Create (hashAlgoName), new obj())
-		let hashBytes bytes =
+		let hashBytes bs =
 			let calcHash =
-				let (_, hash) = (hashAlgo.TransformFinalBlock (bytes, 0, bytes.Length), hashAlgo.Hash)
+				let (_, hash) = (hashAlgo.TransformFinalBlock (bs, 0, bs.Length), hashAlgo.Hash)
 				hashAlgo.Clear()
 				hash
 			lock hashAlgoLock (fun _ -> calcHash)
 			 
 		(* Random Number Generator *)	
 		let (randGen, randGenLock) = (RandomNumberGenerator.Create (), new obj())
-		let random (bytes : byte[]) =
-			lock randGenLock (fun _ -> randGen.GetBytes (bytes))
-			bytes
+		let random (bs : byte[]) =
+			lock randGenLock (fun _ -> randGen.GetBytes (bs))
+			bs
 	
 		let randomBytes len =
 			let mutable (bs : byte[]) = Array.zeroCreate len
