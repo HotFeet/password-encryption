@@ -39,12 +39,12 @@ namespace HotFeet.Security.Cryptography
 
 		(* Hash Algorithm *)	
 		let (hashAlgo, hashAlgoLock) = (HashAlgorithm.Create (hashAlgoName), new obj())
-		let hashBytes bs =
-			let calcHash =
+		let calcHash bs =
+			let imperativeCalcHash =
 				let (_, hash) = (hashAlgo.TransformFinalBlock (bs, 0, bs.Length), hashAlgo.Hash)
 				hashAlgo.Clear()
 				hash
-			lock hashAlgoLock (fun _ -> calcHash)
+			lock hashAlgoLock (fun _ -> imperativeCalcHash)
 			 
 		(* Random Number Generator *)	
 		let (randGen, randGenLock) = (RandomNumberGenerator.Create (), new obj())
@@ -56,10 +56,6 @@ namespace HotFeet.Security.Cryptography
 			let mutable (bs : byte[]) = Array.zeroCreate len
 			random bs
 		
-		let saltPassword password salt =
-			let (+) x y = Array.append x y
-			salt + password + salt
-	
 		(* crypted password format *)
 		let format = sprintf "$6$%s$%s"
 		let cryptedPasswordRegex =
@@ -75,11 +71,16 @@ namespace HotFeet.Security.Cryptography
 			| _ -> failwith "Invalid hash format."
 	
 		(* main methods *)
+		let saltPassword password salt =
+			let (+) x y = Array.append x y
+			salt + password + salt
+
+		let generateHash = saltPassword >> calcHash
 		let crypt password =
 			let salt = randomBytes (saltBitLen >>> 3)
-			(salt, password salt ||> saltPassword > hashBytes)
+			(salt, password salt ||> generateHash)
 		
-		let verify password (salt, hash) = (password salt ||> saltPassword > hashBytes) = hash
+		let verify password (salt, hash) = (password salt ||> generateHash) = hash
 	
 		interface IPasswordHash with
 			member x.Crypt password = password |> toBytes |> crypt |> compose
