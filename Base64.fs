@@ -38,6 +38,6 @@ namespace HotFeet.Text
 		let public ofString (s : string) =
 			match (s.Length * 6) with
 			| len when (len % 8 = 0) -> s |> fromBase64
-			| len -> ((str + "AA") |> fromBase64).[0..((len >>> 3) - 1)]
+			| len -> ((s + "AA") |> fromBase64).[0..((len >>> 3) - 1)]
 
 		let public getStringLen (bitLen : int) = (bitLen + 5) / 6
