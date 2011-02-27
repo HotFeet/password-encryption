@@ -75,13 +75,12 @@ namespace HotFeet.Security.Cryptography
 			| _ -> failwith "Invalid hash format."
 	
 		(* main methods *)
-		let hash password salt = hashBytes (saltPassword password salt)
 		let crypt password =
 			let salt = randomBytes (saltBitLen >>> 3)
-			(salt, hash password salt)
+			(salt, password salt ||> saltPassword > hashBytes)
 		
-		let verify password (salt, hash) = (hashBytes (saltPassword password salt) = hash)
+		let verify password (salt, hash) = (password salt ||> saltPassword > hashBytes) = hash
 	
 		interface IPasswordHash with
 			member x.Crypt password = password |> toBytes |> crypt |> compose
-			member x.Verify (password, cryptedPassword) = (toBytes password, decompose cryptedPassword) ||> verify
+			member x.Verify (password, cryptedPassword) = (password >> toBytes, cryptedPassword |> decompose) ||> verify
