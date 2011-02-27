@@ -77,10 +77,10 @@ namespace HotFeet.Security.Cryptography
 
 		let crypt password =
 			let salt = randomBytes (saltBitLen >>> 3)
-			(salt, password salt ||> saltPassword |> calcHash)
+			(salt, (password, salt) ||> saltPassword |> calcHash)
 		
-		let verify password (salt, hash) = (password salt ||> saltPassword |> calcHash) = hash
+		let verify password (salt, hash) = ((password, salt) ||> saltPassword |> calcHash) = hash
 	
 		interface IPasswordHash with
 			member x.Crypt password = password |> toBytes |> crypt |> compose
-			member x.Verify (password, cryptedPassword) = (password >> toBytes, cryptedPassword |> decompose) ||> verify
+			member x.Verify (password, cryptedPassword) = (password |> toBytes, cryptedPassword |> decompose) ||> verify
