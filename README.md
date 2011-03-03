@@ -3,7 +3,7 @@ Secure Password Encryption
 
 Implementation of a secure SHA512-based password salting and hashing algorithm.
 
-Safety against following attacks
+Safe against following attacks
 -----------------------------
 * code exposure
 * encrpyted password exposure
