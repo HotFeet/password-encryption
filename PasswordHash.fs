@@ -71,7 +71,7 @@ namespace HotFeet.Security.Cryptography
 			| _ -> failwith "Invalid hash format."
 
 		(* main methods *)
-		let saltPassword password salt = salt @ password @ salt
+		let saltPassword password salt = salt @ password @ salt	//concatenation
 
 		let crypt password =
 			let salt = randomBytes (saltBitLen >>> 3)
