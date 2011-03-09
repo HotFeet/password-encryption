@@ -16,3 +16,10 @@ Goal
 ------
 * encryption results identical to a modern linux system (glibc 2.7)
 * hence encryption results are as secure as those of a modern linux system
+
+Runtime Complexity
+----------------------
+- Computation Time: O(n) = const. (to counter timing attacks)
+- Space Allocation: O(n) = const.
+
+where n is the length of the input string (i.e. plaintext password)
