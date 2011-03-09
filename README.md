@@ -22,4 +22,4 @@ Runtime Complexity
 - Computation Time: O(n) = const. (to counter timing attacks)
 - Space Allocation: O(n) = const.
 
-where n is the length of the input string (i.e. plaintext password)
+where n is the length of the input string (i.e. the plaintext password)
