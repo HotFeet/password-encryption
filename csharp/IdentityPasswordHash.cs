@@ -1,5 +1,5 @@
 //
-// TestDriver
+// IdentityPasswordHash
 //
 // Authors:
 //    Juraj Skripsky <js@hotfeet.ch>
@@ -20,26 +20,15 @@
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 using System;
-using HotFeet.Security.Cryptography;
 
-namespace HotFeet.Testing {
-	static class TestDriver {
-		static void Main(string[] args) {
-			string password = args[0];
-
-			WriteTestHash(new IdentityPasswordHash(), password);
-			WriteTestHash(new SHA512PasswordHash(), password);
+namespace HotFeet.Security.Cryptography {
+	public class IdentityPasswordHash : IPasswordHash {
+		public string Hash(string password) {
+			return password;
 		}
-		
-		static void WriteTestHash(IPasswordHash ph, string password) {
-			Console.WriteLine("Class:    {0}", ph.GetType());
 
-			string hash = ph.Hash(password);
-			Console.WriteLine("Password: {0}", password);
-			Console.WriteLine("Hash:     {0}", hash);
-
-			Console.WriteLine("Match:    {0}", ph.Verify(password, hash));
-			Console.WriteLine();
+		public bool Verify(string password, string hash) {
+			return password == hash;
 		}
 	}
 }

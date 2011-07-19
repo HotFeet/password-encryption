@@ -1,5 +1,5 @@
 //
-// PasswordHash
+// SHA512PasswordHash
 //
 // Authors:
 //    Juraj Skripsky <js@hotfeet.ch>
@@ -25,7 +25,7 @@ using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 
 namespace HotFeet.Security.Cryptography {
-	public class PasswordHash : IPasswordHash {
+	public class SHA512PasswordHash : IPasswordHash {
 		// condition: (...BitLength % 8 == 0)		
 		static readonly int saltBitLength = 96;
 		static readonly int hashBitLength = 512;
