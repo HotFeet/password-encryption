@@ -25,8 +25,8 @@ using System.Text.RegularExpressions;
 using System.Security.Cryptography;
 
 namespace HotFeet.Security.Cryptography {
-	public class PasswordHash {
-		// (...BitLength % 8 == 0)		
+	public class PasswordHash : IPasswordHash {
+		// condition: (...BitLength % 8 == 0)		
 		static readonly int saltBitLength = 96;
 		static readonly int hashBitLength = 512;
 
@@ -131,15 +131,6 @@ namespace HotFeet.Security.Cryptography {
 			}
 			
 			return true;
-		}
-	}
-	
-	static class Driver {
-		static void Main(string[] args) {
-			var ph = new PasswordHash();
-			string hash = ph.Hash(args[0]);
-			Console.WriteLine(hash);
-			Console.WriteLine(ph.Verify(args[0], hash));
 		}
 	}
 }

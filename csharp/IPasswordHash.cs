@@ -21,7 +21,9 @@
 
 using System;
 
-public interface IPasswordHash {
-    string Hash(string password);
-    bool Verify(string password, string hash);
+namespace HotFeet.Security.Cryptography {
+	public interface IPasswordHash {
+	    string Hash(string password);
+	    bool Verify(string password, string hash);
+	}
 }
